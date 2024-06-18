@@ -2,18 +2,30 @@ from typing import *
 import os
 import glob
 import math
-import re
+import datetime
 
 
 def sortable_name(filename:str)->str:
     date, time = (filename.split('.')[0]).split('_')
-    date_ = date.split('-')
-    date__ = "".join([str(int(date_[-1])-1960), date_[0], date_[1]])
+    
+    
+    date_ = [int(i) for i in date.split('-')]
+    date__ = [date_[2], date_[0], date_[1]]
 
     time_ = [int(i) for i in time.split('-')]
-    time__ = f"{((time_[0]*3600)+(time_[1]*60)+time_[2]):05}"
+    
+    t = datetime.datetime(
+        year=date__[0],
+        month=date__[1],
+        day=date__[2],
 
-    return f"{date__}_{time__}"
+        hour=time_[0],
+        minute=time_[1],
+        second=time_[2]
+    )
+    
+    b = datetime.datetime.fromtimestamp(0)
+    return int((t-b).total_seconds())
 
 def binarySearch(arr:List[str], searchKey=str, s=0, e=None, baseFn=None)->int:
     e = e if e is not None else len(arr)
@@ -45,6 +57,19 @@ def binarySearch(arr:List[str], searchKey=str, s=0, e=None, baseFn=None)->int:
 #     else:
 #         return file_list[search_idx:min(search_idx+searchGap, len(file_list))]
 
+
+
+
+
+
+# 00:00.ts
+# 00:03.ts    
+# 00:06.ts
+# 00:08.ts
+# 00.10.ts
+# 00.15.ts
+
+# 00:07 -> 00:02-00:12
 
 def getValidStart(searchTime:str, file_dir:str = "./testFiles"):
 
@@ -108,11 +133,18 @@ def getValidFiles_byStamp(searchTime_1:str, searchTime_2:str, file_dir:str = "./
 
     return file_list[search_idx_1:search_idx_2+1]
 
+def getValidFiles_byGap(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->List[str]:
+    start_time, end_time = datetime.datetime.fromtimestamp(sortable_name(searchTime_1) - (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S"), datetime.datetime.fromtimestamp(sortable_name(searchTime_1) + (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S")
 
+    start_time = getValidStart(start_time)
+    end_time = getValidEnd(end_time)
 
+    return getValidFiles_byStamp(start_time, end_time, file_dir)
+
+    
 
 file_dir = "./testFiles" # dir where ts files are held
+
 # mm-dd-yyyy_hh-MM-SS
-print(
-    getValidFiles_byStamp("11-01-2024_01-03-20", "11-01-2024_01-27-00")
-)
+print(getValidFiles_byGap('11-01-2024_01-28-59', minutes_gap = 9, file_dir = file_dir))
+
