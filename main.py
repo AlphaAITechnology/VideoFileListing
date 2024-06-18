@@ -42,35 +42,6 @@ def binarySearch(arr:List[str], searchKey=str, s=0, e=None, baseFn=None)->int:
     else:
         return binarySearch(arr, searchKey, m+1, e, baseFn)
 
-
-
-# def getValidFiles_byGap(searchTime:str, searchGap:int=1, file_dir:str = "./testFiles")->List[str]:
-#     file_list = glob.glob(os.path.join(file_dir, "*.ts"))
-#     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
-
-#     search_idx = binarySearch(
-#         [os.path.basename(f) for f in file_list], searchTime, baseFn=sortable_name
-#     )
-
-#     if search_idx < 0:
-#         return []
-#     else:
-#         return file_list[search_idx:min(search_idx+searchGap, len(file_list))]
-
-
-
-
-
-
-# 00:00.ts
-# 00:03.ts    
-# 00:06.ts
-# 00:08.ts
-# 00.10.ts
-# 00.15.ts
-
-# 00:07 -> 00:02-00:12
-
 def getValidStart(searchTime:str, file_dir:str = "./testFiles"):
 
     file_list = glob.glob(os.path.join(file_dir, "*.ts"))
@@ -141,7 +112,15 @@ def getValidFiles_byGap(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./t
 
     return getValidFiles_byStamp(start_time, end_time, file_dir)
 
-    
+
+# 00:00.ts
+# 00:03.ts    
+# 00:06.ts
+# 00:08.ts
+# 00.10.ts
+# 00.15.ts
+
+# 00:07 -> 00:02-00:12
 
 file_dir = "./testFiles" # dir where ts files are held
 
