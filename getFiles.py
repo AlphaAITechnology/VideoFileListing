@@ -123,19 +123,8 @@ def get_valid_files_byStamp(searchTime_1:str, searchTime_2:str, file_dir:str = "
 def get_valid_files_byGap(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->List[str]:
     start_time, end_time = datetime.datetime.fromtimestamp(sortable_name(searchTime_1) - (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S"), datetime.datetime.fromtimestamp(sortable_name(searchTime_1) + (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S")
 
-    print("start_time", start_time)
-    print("end_time", end_time)
-    print("search_time", searchTime_1, end="\n\n")
-
     start_time = get_valid_start(start_time)
     end_time = get_valid_end(end_time)
-
-
-    print("start_time", start_time)
-    print("end_time", end_time)
-    print("search_time", searchTime_1, end="\n\n")
-
-
 
     return get_valid_files_byStamp(start_time, end_time, file_dir)
 
