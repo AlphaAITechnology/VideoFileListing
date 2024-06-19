@@ -58,23 +58,23 @@ def get_valid_start(searchTime:str, file_dir:str = "./testFiles"):
     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
 
 
-    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(f"{searchTime}.ts")):
+    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(searchTime)):
         return os.path.basename(file_list[0])
-    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(f"{searchTime}.ts")):
+    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(searchTime)):
         return os.path.basename(file_list[-1])
     
 
     idx = 0
     gap = int(math.sqrt(len(file_dir))//1)
-    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(f"{searchTime}.ts"))):
+    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(searchTime))):
         idx += gap
     
     idx = min(idx, len(file_list)-1)
 
     for i in range(max(idx-gap, 0), min(idx+gap, len(file_list))):
-        if sortable_name(os.path.basename(file_list[i])) == sortable_name(f"{searchTime}.ts"):
+        if sortable_name(os.path.basename(file_list[i])) == sortable_name(searchTime):
             return os.path.basename(file_list[i])
-        if sortable_name(os.path.basename(file_list[i])) > sortable_name(f"{searchTime}.ts"):
+        if sortable_name(os.path.basename(file_list[i])) > sortable_name(searchTime):
             return os.path.basename(file_list[i-1])
         
 def get_valid_end(searchTime:str, file_dir:str = "./testFiles"):
@@ -83,9 +83,9 @@ def get_valid_end(searchTime:str, file_dir:str = "./testFiles"):
     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
 
 
-    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(f"{searchTime}.ts")):
+    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(searchTime)):
         return os.path.basename(file_list[0])
-    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(f"{searchTime}.ts")):
+    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(searchTime)):
         return os.path.basename(file_list[-1])
     
 
