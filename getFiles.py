@@ -6,7 +6,7 @@ import datetime
 import subprocess
 
 
-def get_video_length(filename):
+def get_video_length(filename:str):
         result = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
                                 "format=duration", "-of",
                                 "default=noprint_wrappers=1:nokey=1", filename],
@@ -33,7 +33,6 @@ def date_from_name(filename:str):
         minute=time_[1],
         second=time_[2]
     )
-
     return t
 
 def sortable_name(filename:str)->int:
@@ -56,140 +55,118 @@ def binary_search(arr:List[str], searchKey=str, s=0, e=None, baseFn=None)->int:
     else:
         return binary_search(arr, searchKey, m+1, e, baseFn)
 
-def get_valid_start(searchTime:str, file_dir:str = "./testFiles"):
 
-    d = date_from_name(searchTime)
-    d2 = d - datetime.timedelta(days=1)
 
-    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
-    file_list_2 = glob.glob(os.path.join(file_dir, d2.strftime("%m-%d-%Y"), "*.ts"))
+
+def get_file_range(start_time:str, end_time:str, file_dir:str = "./testFiles")->List[str]:
+    start_time_d = date_from_name(start_time)
+    end_time_d = date_from_name(end_time)
+
+    start_time_d -= datetime.timedelta(days=1)
+    end_time_d += datetime.timedelta(days=1)
+
     file_list = []
-    file_list.extend(file_list_1)
-    file_list.extend(file_list_2)
+
+    for i in range(0, 1 + int((end_time_d - start_time_d).total_seconds())//(3600*24)):
+        f_list = glob.glob(os.path.join(file_dir, (start_time_d + datetime.timedelta(days=i)).strftime("%m-%d-%Y"), "*.ts"))
+        file_list.extend(f_list)
     
     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
 
-    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(searchTime)):
-        return os.path.basename(file_list[0])
-    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(searchTime)):
-        return os.path.basename(file_list[-1])
+    return file_list
+
+
+def get_valid_start_idx(start_time:str, file_list:List[str]):
+    start_not_exact_flag = False
+    if sortable_name(os.path.basename(file_list[-1])) < sortable_name(start_time):
+        start_not_exact_flag = True
+        return (len(file_list)-1, start_not_exact_flag)
     
-
-    idx = 0
-    gap = int(math.sqrt(len(file_dir))//1)
-    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(searchTime))):
-        idx += gap
+    if sortable_name(os.path.basename(file_list[0])) > sortable_name(start_time):
+        start_not_exact_flag = True
+        return (0, start_not_exact_flag)
     
-    idx = min(idx, len(file_list)-1)
-
-    for i in range(max(idx-gap, 0), min(idx+gap, len(file_list))):
-        if sortable_name(os.path.basename(file_list[i])) == sortable_name(searchTime):
-            return os.path.basename(file_list[i])
-        if sortable_name(os.path.basename(file_list[i])) > sortable_name(searchTime):
-            return os.path.basename(file_list[i-1])
-        
-def get_valid_end(searchTime:str, file_dir:str = "./testFiles"):
-
-    d = date_from_name(searchTime)
-
-    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
-    file_list_2 = glob.glob(os.path.join(file_dir, (d + datetime.timedelta(days=1)).strftime("%m-%d-%Y"), "*.ts"))
-    file_list = []
-    file_list.extend(file_list_1)
-    file_list.extend(file_list_2)
-
-    file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
-
-
-    if (sortable_name(os.path.basename(file_list[0])) > sortable_name(searchTime)):
-        return os.path.basename(file_list[0])
-    if (sortable_name(os.path.basename(file_list[-1])) < sortable_name(searchTime)):
-        return os.path.basename(file_list[-1])
-    
-
-    idx = 0
-    gap = int(math.sqrt(len(file_dir))//1)
-    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(searchTime))):
-        idx += gap
-    
-    idx = min(idx, len(file_list)-1)
-
-    for i in range(max(idx-gap, 0), min(idx+gap, len(file_list)),1):
-        # if sortable_name(os.path.basename(file_list[i])) >= sortable_name(searchTime):
-        if sortable_name(os.path.basename(file_list[i])) == sortable_name(searchTime):
-            return os.path.basename(file_list[i])
-        if sortable_name(os.path.basename(file_list[i])) > sortable_name(searchTime):
-            return os.path.basename(file_list[i-1])
-
-
-def get_valid_files_byStamp(searchTime_1:str, searchTime_2:str, file_dir:str = "./testFiles")->List[str]:
-    searchTime_1 = get_valid_start(searchTime_1, file_dir)
-    searchTime_2 = get_valid_end(searchTime_2, file_dir)
-
-    d = date_from_name(searchTime_1)
-    file_list = []
-    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
-    file_list.extend(file_list_1)
-
-    
-
-
-    for i in range(1, (int((date_from_name(searchTime_2) - d).total_seconds()) // (3600*24))+2):
-        d2 = d + datetime.timedelta(days=i)
-        file_list_ = glob.glob(os.path.join(file_dir, d2.strftime("%m-%d-%Y"), "*.ts"))
-        file_list.extend(file_list_)
-    
-
-    file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
-
 
 
     search_idx_1 = binary_search(
-        [os.path.basename(f) for f in file_list], searchTime_1, baseFn=sortable_name
-    )
-    search_idx_2 = binary_search(
-        [os.path.basename(f) for f in file_list], searchTime_2, baseFn=sortable_name
-    )
-
-    print(file_list)
-    print("sidx: ", search_idx_1)
-    print("sidx: ", search_idx_2)
-
-    return file_list[search_idx_1:search_idx_2+1]
+        [os.path.basename(f) for f in file_list], start_time, baseFn=sortable_name
+    )    
+    if search_idx_1 != -1:
+        return (search_idx_1, start_not_exact_flag)
+    
 
 
 
-def get_valid_files_byGap(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->List[str]:
-    start_time, end_time = datetime.datetime.fromtimestamp(sortable_name(searchTime_1) - (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S"), datetime.datetime.fromtimestamp(sortable_name(searchTime_1) + (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S")
+    start_not_exact_flag = True
+    idx = 0
+    gap = int(math.sqrt(len(file_list))//1)
+    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(start_time))):
+        idx += gap
+    
+    idx = min(idx, len(file_list)-1)
+    for i in range(max(idx-gap, 0), min(idx+gap, len(file_list))):
+        if sortable_name(os.path.basename(file_list[i])) > sortable_name(start_time):
+            return (i-1, start_not_exact_flag)
+        
 
-    return get_valid_files_byStamp(start_time, end_time, file_dir)
-
-def get_videos(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->Tuple[List[str], bool]:
-    video_files = get_valid_files_byGap(searchTime_1, minutes_gap = minutes_gap, file_dir = file_dir)
-    video_len = sum([get_video_length(v) for v in video_files[:-1]])
-    # duration_len = (sortable_name(os.path.basename(video_files[-1]))-sortable_name(os.path.basename(video_files[0])))
-    duration_len = (sortable_name(searchTime_1)+minutes_gap)-sortable_name(os.path.basename(video_files[0]))
-
-    return (video_files, not (duration_len > video_len))
-
-
-
+def get_valid_end_idx(end_time:str, file_list:List[str]):
+    end_not_exact_flag = False
+    if sortable_name(os.path.basename(file_list[-1])) < sortable_name(end_time):
+        end_not_exact_flag = True
+        return (len(file_list)-1, end_not_exact_flag)
+    
+    if sortable_name(os.path.basename(file_list[0])) > sortable_name(end_time):
+        end_not_exact_flag = True
+        return (0, end_not_exact_flag)
+    
 
 
-# 00:00.ts
-# 00:03.ts    
-# 00:06.ts
-# 00:08.ts
-# 00.10.ts
-# 00.15.ts
+    search_idx_1 = binary_search(
+        [os.path.basename(f) for f in file_list], end_time, baseFn=sortable_name
+    )    
+    if search_idx_1 != -1:
+        return (search_idx_1, end_not_exact_flag)
+    
 
-# 00:07 -> 00:02-00:12
 
-file_dir = "./testFiles" # dir where ts files are held
+    
+    end_not_exact_flag = True
+    idx = 0
+    gap = int(math.sqrt(len(file_list))//1)
+    while((idx < len(file_list)) and (sortable_name(os.path.basename(file_list[idx])) < sortable_name(end_time))):
+        idx += gap
+    
+    idx = min(idx, len(file_list)-1)
+    for i in range(max(idx-gap, 0), min(idx+gap, len(file_list))):
+        if sortable_name(os.path.basename(file_list[i])) > sortable_name(end_time):
+            return (i, end_not_exact_flag)
+        
 
-# # mm-dd-yyyy_hh-MM-SS
 
-print(get_videos('06-19-2024_00-03-00', minutes_gap = 7, file_dir = file_dir))
-# print(get_valid_files_byGap('06-19-2024_00-12-00', minutes_gap = 4, file_dir = file_dir))
 
+
+
+def get_files(start_time:str, end_time:str, file_dir="./testFiles"):
+    file_list = get_file_range(start_time, end_time, file_dir)
+
+    start_idx, start_flg = get_valid_start_idx(start_time, file_list=file_list)
+    end_idx, end_flg = get_valid_end_idx(end_time, file_list=file_list)
+
+    sum_of_video_len = sum([get_video_length(f_v) for f_v in file_list[start_idx:end_idx]])
+    duration = (date_from_name(os.path.basename(file_list[end_idx])) - date_from_name(os.path.basename(file_list[start_idx]))).total_seconds()
+
+    return (
+        file_list[start_idx:end_idx], 
+        "Ends Not Exact" if (start_flg or end_flg) else "Ends Exact",
+        "Incomplete" if (duration < sum_of_video_len) else "Complete"
+        )
+
+
+
+start_time = "06-17-2024_23-44-00"
+end_time = "06-18-2024_00-30-00"
+
+print(
+    get_files(start_time, end_time, "./testFiles")
+)
 
