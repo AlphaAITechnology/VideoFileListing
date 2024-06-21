@@ -15,7 +15,7 @@ def get_video_length(filename):
         return float(result.stdout)
 
 
-def sortable_name(filename:str)->int:
+def date_from_name(filename:str):
     date, time = (filename.split('.')[0]).split('_')
     
     
@@ -33,7 +33,11 @@ def sortable_name(filename:str)->int:
         minute=time_[1],
         second=time_[2]
     )
-    
+
+    return t
+
+def sortable_name(filename:str)->int:
+    t = date_from_name(filename)
     b = datetime.datetime.fromtimestamp(0)
     return int((t-b).total_seconds())
 
@@ -54,9 +58,16 @@ def binary_search(arr:List[str], searchKey=str, s=0, e=None, baseFn=None)->int:
 
 def get_valid_start(searchTime:str, file_dir:str = "./testFiles"):
 
-    file_list = glob.glob(os.path.join(file_dir, "*.ts"))
-    file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
+    d = date_from_name(searchTime)
+    d2 = d - datetime.timedelta(days=1)
 
+    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
+    file_list_2 = glob.glob(os.path.join(file_dir, d2.strftime("%m-%d-%Y"), "*.ts"))
+    file_list = []
+    file_list.extend(file_list_1)
+    file_list.extend(file_list_2)
+    
+    file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
 
     if (sortable_name(os.path.basename(file_list[0])) > sortable_name(searchTime)):
         return os.path.basename(file_list[0])
@@ -79,7 +90,14 @@ def get_valid_start(searchTime:str, file_dir:str = "./testFiles"):
         
 def get_valid_end(searchTime:str, file_dir:str = "./testFiles"):
 
-    file_list = glob.glob(os.path.join(file_dir, "*.ts"))
+    d = date_from_name(searchTime)
+
+    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
+    file_list_2 = glob.glob(os.path.join(file_dir, (d + datetime.timedelta(days=1)).strftime("%m-%d-%Y"), "*.ts"))
+    file_list = []
+    file_list.extend(file_list_1)
+    file_list.extend(file_list_2)
+
     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
 
 
@@ -102,14 +120,29 @@ def get_valid_end(searchTime:str, file_dir:str = "./testFiles"):
             return os.path.basename(file_list[i])
         if sortable_name(os.path.basename(file_list[i])) > sortable_name(searchTime):
             return os.path.basename(file_list[i-1])
-        
+
 
 def get_valid_files_byStamp(searchTime_1:str, searchTime_2:str, file_dir:str = "./testFiles")->List[str]:
-    searchTime_1 = get_valid_start(f"{searchTime_1}.ts", file_dir)
-    searchTime_2 = get_valid_end(f"{searchTime_2}.ts", file_dir)
+    searchTime_1 = get_valid_start(searchTime_1, file_dir)
+    searchTime_2 = get_valid_end(searchTime_2, file_dir)
 
-    file_list = glob.glob(os.path.join(file_dir, "*.ts"))
+    d = date_from_name(searchTime_1)
+    file_list = []
+    file_list_1 = glob.glob(os.path.join(file_dir, d.strftime("%m-%d-%Y"), "*.ts"))
+    file_list.extend(file_list_1)
+
+    
+
+
+    for i in range(1, (int((date_from_name(searchTime_2) - d).total_seconds()) // (3600*24))+2):
+        d2 = d + datetime.timedelta(days=i)
+        file_list_ = glob.glob(os.path.join(file_dir, d2.strftime("%m-%d-%Y"), "*.ts"))
+        file_list.extend(file_list_)
+    
+
     file_list = sorted(file_list, key=lambda x: sortable_name(os.path.basename(x)))
+
+
 
     search_idx_1 = binary_search(
         [os.path.basename(f) for f in file_list], searchTime_1, baseFn=sortable_name
@@ -118,16 +151,18 @@ def get_valid_files_byStamp(searchTime_1:str, searchTime_2:str, file_dir:str = "
         [os.path.basename(f) for f in file_list], searchTime_2, baseFn=sortable_name
     )
 
+    print(file_list)
+    print("sidx: ", search_idx_1)
+    print("sidx: ", search_idx_2)
+
     return file_list[search_idx_1:search_idx_2+1]
+
+
 
 def get_valid_files_byGap(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->List[str]:
     start_time, end_time = datetime.datetime.fromtimestamp(sortable_name(searchTime_1) - (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S"), datetime.datetime.fromtimestamp(sortable_name(searchTime_1) + (minutes_gap*60)).strftime("%m-%d-%Y_%H-%M-%S")
 
-    start_time = get_valid_start(start_time)
-    end_time = get_valid_end(end_time)
-
     return get_valid_files_byStamp(start_time, end_time, file_dir)
-
 
 def get_videos(searchTime_1:str, minutes_gap:int=5, file_dir:str = "./testFiles")->Tuple[List[str], bool]:
     video_files = get_valid_files_byGap(searchTime_1, minutes_gap = minutes_gap, file_dir = file_dir)
@@ -154,7 +189,7 @@ file_dir = "./testFiles" # dir where ts files are held
 
 # # mm-dd-yyyy_hh-MM-SS
 
-print(get_videos('06-19-2024_00-12-00', minutes_gap = 4, file_dir = file_dir))
+print(get_videos('06-19-2024_00-03-00', minutes_gap = 7, file_dir = file_dir))
 # print(get_valid_files_byGap('06-19-2024_00-12-00', minutes_gap = 4, file_dir = file_dir))
 
 
