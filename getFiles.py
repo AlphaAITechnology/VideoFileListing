@@ -163,7 +163,7 @@ def get_files(start_time:str, end_time:str, file_dir="./testFiles"):
 
 
 
-start_time = "06-17-2024_23-44-00"
+start_time = "06-17-2024_23-45-00"
 end_time = "06-18-2024_00-30-00"
 
 print(
